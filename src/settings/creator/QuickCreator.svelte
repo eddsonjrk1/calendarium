@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Platform } from "obsidian";
+    import { Platform, Notice } from "obsidian";
     import { onMount } from "svelte";
     import CreatorTitle from "./CreatorTitle.svelte";
     import History from "./Utilities/History.svelte";
@@ -9,6 +9,24 @@
     import type { CreatorSection } from "./creator.types";
     import { writable } from "svelte/store";
     import Sidebar from "./Containers/sidebar/Sidebar.svelte";
+
+    async function handleSaveCalendar() {
+        try {
+            // Acessa a instância global do Obsidian e "pesca" o Calendarium diretamente da memória
+            const app = (window as any).app;
+            const calendariumPlugin = app.plugins.plugins["calendarium"];
+            
+            if (calendariumPlugin && typeof calendariumPlugin.saveSettings === "function") {
+                await calendariumPlugin.saveSettings(); 
+                new Notice("Calendário persistido com sucesso!");
+            } else {
+                new Notice("Aviso: Função de salvar não encontrada na instância.");
+            }
+        } catch (error) {
+            new Notice("Falha ao salvar. Verifique logs do console.");
+            console.error("Erro na persistência do Calendarium:", error);
+        }
+    }
 
     const mobile = Platform.isMobile;
     let ready = mobile;
@@ -28,6 +46,11 @@
             {#if $selected == "General"}
                 <Info />
                 <CurrentDate />
+                <div class="setting-item-control calendarium-save-action" style="margin-top: 1rem;">
+                    <button class="mod-cta" on:click={handleSaveCalendar}>
+                        Salvar
+                    </button>
+                </div>
             {/if}
             {#if $selected == "Events"}
                 <Events />
